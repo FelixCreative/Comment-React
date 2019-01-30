@@ -1,0 +1,24 @@
+#image-upload-main{
+    display:none;
+}
+
+#image-upload-submit-main{
+    display:none;
+}
+
+.add1{
+    display:none;
+}
+
+.add2{
+    color:#0a0a0a;
+}
+
+.add3{
+    z-index: auto; 
+    position: relative; 
+    line-height: normal; 
+    font-size: 16px; 
+    transition: none 0s ease 0s; 
+    background: transparent !important;
+}
