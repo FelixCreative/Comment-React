@@ -1,21 +1,24 @@
 import React from 'react';
 import ChildReply from './ChildReply';
-import FooterComment from './FooterComment';
+import FetchApi from '../service/fetchApi';
 
 export default class ListComment extends React.Component {
     constructor() {
         super();
         this.state = {
-            comments: [],
             loading: true,
             isChildReply: false,
+            toTalLike: 0,
         }
-        fetch('api/SampleData/getAllComments')
-            .then(response => response.json())
-            .then(data => {
-                this.setState({ comments: data, loading: false })
-            });
     }
+    // componentDidUpdate() {
+    //     FetchApi.getWithCallBack('api/Comment/getall', (data) => {
+    //         this.setState({
+    //             comments: data,
+    //             loading: false
+    //         })
+    //     });
+    // }
 
     handleClickChildReply = () => {
         this.setState({
@@ -23,9 +26,37 @@ export default class ListComment extends React.Component {
         })
     }
 
+    handleClickLike = (commentId) => {
+        let userLogin = this.props.userLogin;
+        if (userLogin === null) {
+            alert("Please login first!");
+            return;
+        }
+        let params = {
+            commentId: commentId,
+            userId: userLogin.email
+        }
+        FetchApi.post('api/LikeButton/clickLike', params);
+    }
+
+    async loadCLikeAsync(id) {
+        let response = await fetch(`api/likebutton/totalLikeByCommentId/${id}`);
+        let data = await response.json();
+        return data;
+    }
+
     renderComments(comments) {
+        let toTalLike = 0;
         return (
             comments.map(comment => {
+
+                // FetchApi.getWithCallBack(`api/likebutton/totalLikeByCommentId/${comment.id}`, (data) => {
+                //     toTalLike = data;
+                // });
+                this.loadCLikeAsync(comment.id).then(data=>{
+                    return data;
+                });
+                console.log(toTalLike);
                 return (
                     <details open key={comment.id}>
                         <summary><span>&nbsp;</span></summary>
@@ -36,11 +67,12 @@ export default class ListComment extends React.Component {
                                     <a href="javascript:void(0)">
                                         <img className="profile-pic" src={comment.image} />
                                         <span className="comment-username">
-                                            <span className="comment-username-inner">{comment.userName}</span>
+                                            <span className="comment-username-inner">{comment.fullName}</span>
                                         </span>
                                     </a>
                                     <a href="javascript:void(0)" rel="noopener noreferrer" target="_blank">
-                                        <img className="icon-img" src="https://practicaldev-herokuapp-com.freetls.fastly.net/assets/github-logo-6a5bca60a4ebf959a6df7f08217acd07ac2bc285164fae041eacb8a148b1bab9.svg" alt="Github logo" />
+                                        {/* <img className="icon-img" src="https://practicaldev-herokuapp-com.freetls.fastly.net/assets/github-logo-6a5bca60a4ebf959a6df7f08217acd07ac2bc285164fae041eacb8a148b1bab9.svg" alt="Github logo" /> */}
+                                        <img className="icon-img" src="https://madeby.google.com/static/images/google_g_logo.svg" alt="Google logo" />
                                     </a>
                                     <div className="comment-date">
                                         <a href="javascript:void(0)">{comment.dateFormatted}</a>
@@ -54,17 +86,20 @@ export default class ListComment extends React.Component {
                                     <p>
                                         {comment.content}
                                     </p>
-                                    <button className="reaction-button">
+                                    <button
+                                        className="reaction-button"
+                                        onClick={() => this.handleClickLike(comment.id)}>
                                         <img src="https://practicaldev-herokuapp-com.freetls.fastly.net/assets/favorite-heart-outline-button-2dcee70f90c0bc12bee8cbc5a8a409ba181e88912814fb0515214204bdc92c71.svg" />
                                         <img className="voted-heart" src="https://practicaldev-herokuapp-com.freetls.fastly.net/assets/emoji/emoji-one-heart-86ec9beca6e804af6db630e35a1e12ebd169103c0156e881e7f8a38933e1a546.png" />
-                                        <span className="reactions-count">{comment.like}</span>
+                                        <span className="reactions-count">
+                                            {toTalLike}
+                                        </span>
                                     </button>
                                 </div>
                                 <div className="actions">
                                     <ChildReply
                                         onClickOpenChildReply={this.handleClickChildReply}
-                                        isChildReply = {this.state.isChildReply}
-                                    />
+                                        isChildReply={this.state.isChildReply} />
                                 </div>
                             </div>
                         </div>
@@ -74,7 +109,8 @@ export default class ListComment extends React.Component {
         );
     }
     render() {
-        let content = this.state.loading ? <p><em>Loading...</em></p> : this.renderComments(this.state.comments);
+        // let content = this.state.loading ? <p><em>Loading...</em></p> : this.renderComments(this.props.comments);
+        let content = this.renderComments(this.props.comments);
         return (
             <div className="comment-trees" id="comment-trees-container">
                 {content}

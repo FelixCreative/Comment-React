@@ -1,10 +1,17 @@
+using AutoMapper;
+using Comment.React.Helper;
+using Comment.React.Repository;
+using Comment.React.Service;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using User.React.Service;
 
 namespace Comment.React
 {
@@ -20,13 +27,32 @@ namespace Comment.React
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            //Config DbContext
+            services.AddDbContext<CommentDbContext>(x => x.UseSqlServer(Configuration.GetConnectionString("CommentDb")));
 
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
                 configuration.RootPath = "ClientApp/build";
             });
+
+            //Inject Dependency
+            services.AddTransient<ICommentRepository, CommentRepository>();
+            services.AddTransient<IUserRepository, UserRepository>();
+            services.AddTransient<ICommentService, CommentService>();
+            services.AddTransient<IUserService, UserService>();
+            services.AddTransient<ILikeButtonRepository, LikeButtonRepository>();
+            services.AddTransient<ILikeButtonService, LikeButtonService>();
+
+            //Config AutoMapper
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new Mapping());
+            });
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
